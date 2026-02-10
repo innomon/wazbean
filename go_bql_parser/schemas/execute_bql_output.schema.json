@@ -1,0 +1,86 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/innomon/wazbean/schemas/execute_bql_output.schema.json",
+  "title": "ExecuteBQL Output",
+  "description": "JSON output of the ExecuteBQL(query, ledgerText) function. Returns either a successful result with columns and rows, or an error object.",
+  "oneOf": [
+    {
+      "type": "object",
+      "description": "Successful query result containing column names and row data.",
+      "properties": {
+        "columns": {
+          "type": "array",
+          "description": "Ordered list of column names corresponding to the SELECT expressions. Plain identifiers use their name (e.g. \"account\"). Aggregate functions use lowercase notation (e.g. \"sum(amount)\", \"count(*)\").",
+          "items": {
+            "type": "string"
+          },
+          "minItems": 1
+        },
+        "rows": {
+          "type": "array",
+          "description": "Result rows. Each row is an array of values positionally aligned with the columns array.",
+          "items": {
+            "type": "array",
+            "description": "A single result row.",
+            "items": {
+              "oneOf": [
+                {
+                  "type": "string",
+                  "description": "String value for fields like account, date, payee, narration, currency, position, flag."
+                },
+                {
+                  "type": "number",
+                  "description": "Numeric value for fields like amount, or aggregate results from SUM() and COUNT()."
+                },
+                {
+                  "type": "null",
+                  "description": "Null value for postings without an explicit amount."
+                }
+              ]
+            }
+          }
+        }
+      },
+      "required": ["columns", "rows"],
+      "additionalProperties": false
+    },
+    {
+      "type": "object",
+      "description": "Error response returned when parsing or execution fails.",
+      "properties": {
+        "error": {
+          "type": "string",
+          "description": "Human-readable error message. Prefixed with the error phase: \"parse error:\", \"ledger error:\", \"execution error:\", or \"serialization error:\"."
+        }
+      },
+      "required": ["error"],
+      "additionalProperties": false
+    }
+  ],
+  "examples": [
+    {
+      "columns": ["account", "sum(amount)"],
+      "rows": [
+        ["Expenses:Food:Groceries", 607.65],
+        ["Expenses:Food:Restaurant", 258.50]
+      ]
+    },
+    {
+      "columns": ["date", "account", "position"],
+      "rows": [
+        ["2024-01-16", "Expenses:Food:Groceries", "87.34 USD"],
+        ["2024-02-03", "Expenses:Food:Groceries", "112.60 USD"]
+      ]
+    },
+    {
+      "columns": ["account", "count(*)"],
+      "rows": [
+        ["Assets:BofA:Checking", 5],
+        ["Expenses:Rent", 1]
+      ]
+    },
+    {
+      "error": "parse error: BQL Parse Error: syntax error at position 7"
+    }
+  ]
+}

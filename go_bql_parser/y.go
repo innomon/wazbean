@@ -9,13 +9,17 @@ import __yyfmt__ "fmt"
 
 //line bql.y:6
 type yySymType struct {
-	yys      int
-	str      string
-	expr     Expression
-	exprs    []Expression
-	orderBy  OrderBy
-	orderBys []OrderBy
-	query    *Query
+	yys         int
+	str         string
+	expr        Expression
+	exprs       []Expression
+	orderBy     OrderBy
+	orderBys    []OrderBy
+	query       *Query
+	whereClause struct {
+		field string
+		expr  Expression
+	}
 }
 
 const SELECT = 57346
@@ -46,6 +50,9 @@ var yyToknames = [...]string{
 	"STRING",
 	"EQ",
 	"','",
+	"'('",
+	"')'",
+	"'*'",
 }
 
 var yyStatenames = [...]string{}
@@ -54,7 +61,7 @@ const yyEofCode = 1
 const yyErrCode = 2
 const yyInitialStackSize = 16
 
-//line bql.y:119
+//line bql.y:133
 
 //line yacctab:1
 var yyExca = [...]int8{
@@ -65,49 +72,51 @@ var yyExca = [...]int8{
 
 const yyPrivate = 57344
 
-const yyLast = 33
+const yyLast = 40
 
 var yyAct = [...]int8{
-	4, 25, 8, 3, 27, 7, 20, 23, 11, 12,
-	5, 16, 7, 29, 30, 21, 19, 18, 14, 10,
-	2, 15, 26, 22, 28, 24, 17, 13, 26, 31,
-	9, 6, 1,
+	4, 30, 21, 3, 5, 7, 8, 20, 12, 9,
+	15, 32, 7, 14, 25, 28, 7, 13, 5, 34,
+	35, 26, 19, 24, 23, 17, 11, 31, 27, 2,
+	18, 33, 29, 31, 36, 22, 16, 10, 6, 1,
 }
 
 var yyPact = [...]int16{
-	16, -1000, -2, -3, -1000, -1000, 13, -2, -4, 11,
-	-1, -1000, -1000, 9, 7, -1000, -8, -1000, 6, -2,
-	-6, -2, -10, -1000, -11, -1000, 3, -2, -1000, -1000,
-	-1000, -1000,
+	25, -1000, 6, 1, -1000, -7, 20, 6, 4, -8,
+	18, 10, -1000, -1000, -10, -15, 16, 14, -1000, 0,
+	-1000, -1000, -1000, 12, 6, 2, 6, -3, -1000, -4,
+	-1000, 9, 6, -1000, -1000, -1000, -1000,
 }
 
 var yyPgo = [...]int8{
-	0, 32, 3, 0, 31, 30, 27, 26, 25, 1,
-	24, 21,
+	0, 39, 3, 0, 38, 37, 36, 35, 32, 1,
+	31, 30,
 }
 
 var yyR1 = [...]int8{
-	0, 1, 2, 2, 3, 4, 4, 5, 5, 11,
-	6, 6, 7, 7, 8, 8, 9, 10, 10, 10,
+	0, 1, 2, 2, 3, 3, 3, 4, 4, 5,
+	5, 11, 6, 6, 7, 7, 8, 8, 9, 10,
+	10, 10,
 }
 
 var yyR2 = [...]int8{
-	0, 6, 1, 3, 1, 0, 2, 0, 2, 3,
-	0, 3, 0, 3, 1, 3, 2, 0, 1, 1,
+	0, 6, 1, 3, 1, 4, 4, 0, 2, 0,
+	2, 3, 0, 3, 0, 3, 1, 3, 2, 0,
+	1, 1,
 }
 
 var yyChk = [...]int16{
-	-1000, -1, 4, -2, -3, 12, -4, 15, 5, -5,
-	6, -3, 13, -6, 7, -11, 12, -7, 8, 9,
-	14, 9, -2, 13, -8, -9, -3, 15, -10, 10,
-	11, -9,
+	-1000, -1, 4, -2, -3, 12, -4, 15, 5, 16,
+	-5, 6, -3, 13, -2, 18, -6, 7, -11, 12,
+	17, 17, -7, 8, 9, 14, 9, -2, 13, -8,
+	-9, -3, 15, -10, 10, 11, -9,
 }
 
 var yyDef = [...]int8{
-	0, -2, 0, 5, 2, 4, 7, 0, 0, 10,
-	0, 3, 6, 12, 0, 8, 0, 1, 0, 0,
-	0, 0, 11, 9, 13, 14, 17, 0, 16, 18,
-	19, 15,
+	0, -2, 0, 7, 2, 4, 9, 0, 0, 0,
+	12, 0, 3, 8, 0, 0, 14, 0, 10, 0,
+	5, 6, 1, 0, 0, 0, 0, 13, 11, 15,
+	16, 19, 0, 18, 20, 21, 17,
 }
 
 var yyTok1 = [...]int8{
@@ -115,7 +124,7 @@ var yyTok1 = [...]int8{
 	3, 3, 3, 3, 3, 3, 3, 3, 3, 3,
 	3, 3, 3, 3, 3, 3, 3, 3, 3, 3,
 	3, 3, 3, 3, 3, 3, 3, 3, 3, 3,
-	3, 3, 3, 3, 15,
+	16, 17, 18, 3, 15,
 }
 
 var yyTok2 = [...]int8{
@@ -466,122 +475,137 @@ yydefault:
 
 	case 1:
 		yyDollar = yyS[yypt-6 : yypt+1]
-//line bql.y:37
+//line bql.y:41
 		{
 			yyVAL.query = &Query{
-				Select:  yyDollar[2].exprs,
-				From:    yyDollar[3].str,
-				Where:   yyDollar[4].expr,
-				GroupBy: yyDollar[5].exprs,
-				OrderBy: yyDollar[6].orderBys,
+				Select:     yyDollar[2].exprs,
+				From:       yyDollar[3].str,
+				Where:      yyDollar[4].whereClause.expr,
+				WhereField: yyDollar[4].whereClause.field,
+				GroupBy:    yyDollar[5].exprs,
+				OrderBy:    yyDollar[6].orderBys,
 			}
 			yylex.(*BQLLexer).result = yyVAL.query
 		}
 	case 2:
 		yyDollar = yyS[yypt-1 : yypt+1]
-//line bql.y:51
+//line bql.y:56
 		{
 			yyVAL.exprs = []Expression{yyDollar[1].expr}
 		}
 	case 3:
 		yyDollar = yyS[yypt-3 : yypt+1]
-//line bql.y:55
+//line bql.y:60
 		{
 			yyVAL.exprs = append(yyDollar[1].exprs, yyDollar[3].expr)
 		}
 	case 4:
 		yyDollar = yyS[yypt-1 : yypt+1]
-//line bql.y:62
+//line bql.y:67
 		{
 			yyVAL.expr = Expression{Literal: yyDollar[1].str}
 		}
 	case 5:
-		yyDollar = yyS[yypt-0 : yypt+1]
-//line bql.y:68
+		yyDollar = yyS[yypt-4 : yypt+1]
+//line bql.y:71
 		{
-			yyVAL.str = ""
+			yyVAL.expr = Expression{FuncName: yyDollar[1].str, FuncArgs: yyDollar[3].exprs}
 		}
 	case 6:
-		yyDollar = yyS[yypt-2 : yypt+1]
-//line bql.y:69
+		yyDollar = yyS[yypt-4 : yypt+1]
+//line bql.y:75
 		{
-			yyVAL.str = yyDollar[2].str
+			yyVAL.expr = Expression{FuncName: yyDollar[1].str, FuncArgs: []Expression{{Literal: "*"}}}
 		}
 	case 7:
 		yyDollar = yyS[yypt-0 : yypt+1]
-//line bql.y:73
+//line bql.y:81
 		{
-			yyVAL.expr = Expression{}
+			yyVAL.str = ""
 		}
 	case 8:
 		yyDollar = yyS[yypt-2 : yypt+1]
-//line bql.y:74
+//line bql.y:82
 		{
-			yyVAL.expr = yyDollar[2].expr
+			yyVAL.str = yyDollar[2].str
 		}
 	case 9:
-		yyDollar = yyS[yypt-3 : yypt+1]
-//line bql.y:79
-		{
-			yyVAL.expr = Expression{Literal: yyDollar[3].str}
-		}
-	case 10:
 		yyDollar = yyS[yypt-0 : yypt+1]
 //line bql.y:86
 		{
-			yyVAL.exprs = nil
+			yyVAL.whereClause.field = ""
+			yyVAL.whereClause.expr = Expression{}
+		}
+	case 10:
+		yyDollar = yyS[yypt-2 : yypt+1]
+//line bql.y:87
+		{
+			yyVAL.whereClause = yyDollar[2].whereClause
 		}
 	case 11:
 		yyDollar = yyS[yypt-3 : yypt+1]
-//line bql.y:87
+//line bql.y:92
 		{
-			yyVAL.exprs = yyDollar[3].exprs
+			yyVAL.whereClause.field = yyDollar[1].str
+			yyVAL.whereClause.expr = Expression{Literal: yyDollar[3].str}
 		}
 	case 12:
 		yyDollar = yyS[yypt-0 : yypt+1]
-//line bql.y:91
+//line bql.y:100
 		{
-			yyVAL.orderBys = nil
+			yyVAL.exprs = nil
 		}
 	case 13:
 		yyDollar = yyS[yypt-3 : yypt+1]
-//line bql.y:92
+//line bql.y:101
 		{
-			yyVAL.orderBys = yyDollar[3].orderBys
+			yyVAL.exprs = yyDollar[3].exprs
 		}
 	case 14:
-		yyDollar = yyS[yypt-1 : yypt+1]
-//line bql.y:97
+		yyDollar = yyS[yypt-0 : yypt+1]
+//line bql.y:105
 		{
-			yyVAL.orderBys = []OrderBy{yyDollar[1].orderBy}
+			yyVAL.orderBys = nil
 		}
 	case 15:
 		yyDollar = yyS[yypt-3 : yypt+1]
-//line bql.y:101
+//line bql.y:106
+		{
+			yyVAL.orderBys = yyDollar[3].orderBys
+		}
+	case 16:
+		yyDollar = yyS[yypt-1 : yypt+1]
+//line bql.y:111
+		{
+			yyVAL.orderBys = []OrderBy{yyDollar[1].orderBy}
+		}
+	case 17:
+		yyDollar = yyS[yypt-3 : yypt+1]
+//line bql.y:115
 		{
 			yyVAL.orderBys = append(yyDollar[1].orderBys, yyDollar[3].orderBy)
 		}
-	case 16:
+	case 18:
 		yyDollar = yyS[yypt-2 : yypt+1]
-//line bql.y:108
+//line bql.y:122
 		{
 			yyVAL.orderBy = OrderBy{Expression: yyDollar[1].expr, Ascending: (yyDollar[2].str != "DESC")}
 		}
-	case 17:
-		yyDollar = yyS[yypt-0 : yypt+1]
-//line bql.y:114
-		{
-			yyVAL.str = "ASC"
-		}
-	case 18:
-		yyDollar = yyS[yypt-1 : yypt+1]
-//line bql.y:115
-		{
-			yyVAL.str = "ASC"
-		}
 	case 19:
+		yyDollar = yyS[yypt-0 : yypt+1]
+//line bql.y:128
+		{
+			yyVAL.str = "ASC"
+		}
+	case 20:
 		yyDollar = yyS[yypt-1 : yypt+1]
-//line bql.y:116
+//line bql.y:129
+		{
+			yyVAL.str = "ASC"
+		}
+	case 21:
+		yyDollar = yyS[yypt-1 : yypt+1]
+//line bql.y:130
 		{
 			yyVAL.str = "DESC"
 		}

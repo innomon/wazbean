@@ -1,0 +1,198 @@
+option "title" "Test Ledger"
+option "operating_currency" "USD"
+
+2014-01-01 open Assets:BofA:Checking        USD
+2014-01-01 open Assets:BofA:Savings         USD
+2014-01-01 open Assets:Cash                 USD
+2014-01-01 open Liabilities:CreditCard:Visa USD
+2014-01-01 open Income:Salary:AcmeCo        USD
+2014-01-01 open Income:Interest:Savings     USD
+2014-01-01 open Expenses:Food:Restaurant    USD
+2014-01-01 open Expenses:Food:Groceries     USD
+2014-01-01 open Expenses:Transport:Gas      USD
+2014-01-01 open Expenses:Rent               USD
+2014-01-01 open Expenses:Utilities:Electric USD
+2014-01-01 open Expenses:Clothes            USD
+2014-01-01 open Equity:Opening-Balances     USD
+
+2024-01-02 * "Opening Balance" "Carry-over from previous year"
+  Assets:BofA:Checking     5200.00 USD
+  Assets:BofA:Savings     12000.00 USD
+  Assets:Cash                200.00 USD
+  Equity:Opening-Balances
+
+; --- January 2024 ---
+
+2024-01-15 * "AcmeCo" "Salary deposit"
+  Assets:BofA:Checking    3000.00 USD
+  Income:Salary:AcmeCo   -3000.00 USD
+
+2024-01-16 * "Whole Foods" "Weekly groceries"
+  Expenses:Food:Groceries   87.34 USD
+  Assets:BofA:Checking     -87.34 USD
+
+2024-01-18 * "Shell Station" "Gas fill-up"
+  Expenses:Transport:Gas    48.50 USD
+  Liabilities:CreditCard:Visa
+
+2024-01-20 * "Olive Garden" "Dinner with family"
+  Expenses:Food:Restaurant  72.15 USD
+  Liabilities:CreditCard:Visa
+
+2024-01-25 * "Landlord Properties LLC" "January rent"
+  Expenses:Rent           1500.00 USD
+  Assets:BofA:Checking   -1500.00 USD
+
+2024-01-29 * "AcmeCo" "Salary deposit"
+  Assets:BofA:Checking    3000.00 USD
+  Income:Salary:AcmeCo   -3000.00 USD
+
+2024-01-30 * "Transfer" "Monthly savings transfer"
+  Assets:BofA:Savings      500.00 USD
+  Assets:BofA:Checking    -500.00 USD
+
+; --- February 2024 ---
+
+2024-02-03 * "Trader Joe's" "Groceries"
+  Expenses:Food:Groceries  112.60 USD
+  Assets:BofA:Checking    -112.60 USD
+
+2024-02-05 * "Pacific Gas & Electric" "Electric bill - January"
+  Expenses:Utilities:Electric  118.45 USD
+  Assets:BofA:Checking        -118.45 USD
+
+2024-02-08 * "Chipotle" "Quick lunch"
+  Expenses:Food:Restaurant  14.85 USD
+  Assets:Cash              -14.85 USD
+
+2024-02-10 * "BP" "Gas"
+  Expenses:Transport:Gas    52.30 USD
+  Liabilities:CreditCard:Visa
+
+2024-02-12 * "AcmeCo" "Salary deposit"
+  Assets:BofA:Checking    3000.00 USD
+  Income:Salary:AcmeCo   -3000.00 USD
+
+2024-02-14 * "Nordstrom" "Valentine's Day outfit"
+  Expenses:Clothes         189.99 USD
+  Liabilities:CreditCard:Visa
+
+2024-02-15 * "Visa" "Credit card payment"
+  Liabilities:CreditCard:Visa  377.79 USD
+  Assets:BofA:Checking         -377.79 USD
+
+2024-02-20 * "Safeway" "Groceries"
+  Expenses:Food:Groceries   64.22 USD
+  Assets:BofA:Checking     -64.22 USD
+
+2024-02-25 * "Landlord Properties LLC" "February rent"
+  Expenses:Rent           1500.00 USD
+  Assets:BofA:Checking   -1500.00 USD
+
+2024-02-26 * "AcmeCo" "Salary deposit"
+  Assets:BofA:Checking    3000.00 USD
+  Income:Salary:AcmeCo   -3000.00 USD
+
+2024-02-28 * "Transfer" "Monthly savings transfer"
+  Assets:BofA:Savings      500.00 USD
+  Assets:BofA:Checking    -500.00 USD
+
+; --- March 2024 ---
+
+2024-03-02 * "Costco" "Bulk groceries"
+  Expenses:Food:Groceries  148.90 USD
+  Assets:BofA:Checking    -148.90 USD
+
+2024-03-05 * "Pacific Gas & Electric" "Electric bill - February"
+  Expenses:Utilities:Electric  124.10 USD
+  Assets:BofA:Checking        -124.10 USD
+
+2024-03-07 * "Sushi Roku" "Dinner out"
+  Expenses:Food:Restaurant  63.40 USD
+  Liabilities:CreditCard:Visa
+
+2024-03-09 * "Chevron" "Gas fill-up"
+  Expenses:Transport:Gas    44.75 USD
+  Assets:Cash              -44.75 USD
+
+2024-03-11 * "AcmeCo" "Salary deposit"
+  Assets:BofA:Checking    3000.00 USD
+  Income:Salary:AcmeCo   -3000.00 USD
+
+2024-03-15 * "H&M" "Spring clothes"
+  Expenses:Clothes          75.00 USD
+  Liabilities:CreditCard:Visa
+
+2024-03-16 * "Visa" "Credit card payment"
+  Liabilities:CreditCard:Visa  183.15 USD
+  Assets:BofA:Checking         -183.15 USD
+
+2024-03-18 * "Panda Express" "Takeout"
+  Expenses:Food:Restaurant  22.50 USD
+  Assets:Cash              -22.50 USD
+
+2024-03-20 * "Kroger" "Groceries"
+  Expenses:Food:Groceries   93.15 USD
+  Assets:BofA:Checking     -93.15 USD
+
+2024-03-25 * "Landlord Properties LLC" "March rent"
+  Expenses:Rent           1500.00 USD
+  Assets:BofA:Checking   -1500.00 USD
+
+2024-03-25 * "AcmeCo" "Salary deposit"
+  Assets:BofA:Checking    3000.00 USD
+  Income:Salary:AcmeCo   -3000.00 USD
+
+2024-03-28 * "Transfer" "Monthly savings transfer"
+  Assets:BofA:Savings      500.00 USD
+  Assets:BofA:Checking    -500.00 USD
+
+2024-03-31 * "BofA" "Savings interest"
+  Assets:BofA:Savings        8.25 USD
+  Income:Interest:Savings   -8.25 USD
+
+; --- April 2024 ---
+
+2024-04-01 * "Pacific Gas & Electric" "Electric bill - March"
+  Expenses:Utilities:Electric  115.80 USD
+  Assets:BofA:Checking        -115.80 USD
+
+2024-04-04 * "Whole Foods" "Groceries"
+  Expenses:Food:Groceries  101.44 USD
+  Assets:BofA:Checking    -101.44 USD
+
+2024-04-06 * "Exxon" "Gas"
+  Expenses:Transport:Gas    56.20 USD
+  Liabilities:CreditCard:Visa
+
+2024-04-08 * "AcmeCo" "Salary deposit"
+  Assets:BofA:Checking    3000.00 USD
+  Income:Salary:AcmeCo   -3000.00 USD
+
+2024-04-12 * "The Cheesecake Factory" "Birthday dinner"
+  Expenses:Food:Restaurant  85.60 USD
+  Liabilities:CreditCard:Visa
+
+2024-04-15 * "Visa" "Credit card payment"
+  Liabilities:CreditCard:Visa  141.80 USD
+  Assets:BofA:Checking         -141.80 USD
+
+2024-04-20 * "Uniqlo" "Summer basics"
+  Expenses:Clothes          62.00 USD
+  Assets:BofA:Checking     -62.00 USD
+
+2024-04-22 * "AcmeCo" "Salary deposit"
+  Assets:BofA:Checking    3000.00 USD
+  Income:Salary:AcmeCo   -3000.00 USD
+
+2024-04-25 * "Landlord Properties LLC" "April rent"
+  Expenses:Rent           1500.00 USD
+  Assets:BofA:Checking   -1500.00 USD
+
+2024-04-28 * "Transfer" "Monthly savings transfer"
+  Assets:BofA:Savings      500.00 USD
+  Assets:BofA:Checking    -500.00 USD
+
+2024-04-30 * "BofA" "Savings interest"
+  Assets:BofA:Savings        9.10 USD
+  Income:Interest:Savings   -9.10 USD

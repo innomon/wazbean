@@ -24,7 +24,7 @@ func TestParseValidQueries(t *testing.T) {
 		{
 			name:         "select from where group by order by",
 			query:        "SELECT account, balance FROM 'Expenses:Cash' WHERE category = 'Groceries' GROUP BY account ORDER BY balance DESC",
-			expectedJSON: `{"select":[{"literal":"account"},{"literal":"balance"}],"from":"Expenses:Cash","where":{"literal":"Groceries"},"group_by":[{"literal":"account"}],"order_by":[{"expression":{"literal":"balance"},"ascending":false}]}`,
+			expectedJSON: `{"select":[{"literal":"account"},{"literal":"balance"}],"from":"Expenses:Cash","where":{"literal":"Groceries"},"where_field":"category","group_by":[{"literal":"account"}],"order_by":[{"expression":{"literal":"balance"},"ascending":false}]}`,
 		},
 		{
 			name:         "order by ascending implicit",

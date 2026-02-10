@@ -1,0 +1,8 @@
+package wazbean:bql-parser;
+
+world bql-parser {
+    include wasi:cli/imports@0.2.0;
+
+    export parse-bql-to-json: func(query: string) -> string;
+    export execute-bql: func(query: string, ledger-text: string) -> string;
+}

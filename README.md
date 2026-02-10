@@ -1,10 +1,16 @@
-# Wazbean: BQL Parser WASM Component
+# Wazbean: BQL Parser & Query Engine WASM Component
 
-A self-contained WebAssembly (WASM) component that parses [Beancount Query Language (BQL)](https://beancount.github.io/docs/beancount_query_language.html) strings into JSON ASTs. Designed to be deployed as a [Wassette](https://github.com/microsoft/wassette) component, exposing the parser as an MCP tool for AI agents.
+A self-contained WebAssembly (WASM) component that parses [Beancount Query Language (BQL)](https://beancount.github.io/docs/beancount_query_language.html) strings and executes them against Beancount ledger data. Designed to be deployed as a [Wassette](https://github.com/microsoft/wassette) component, exposing the parser and query engine as MCP tools for AI agents.
 
 ## Overview
 
-Wazbean provides a BQL parser compiled to a WASI-compliant `.wasm` module. The parser is written in Go using `goyacc` for grammar-driven parsing and compiled to WASM via TinyGo. When deployed as a Wassette component, the parser becomes an MCP tool that AI agents (Claude, GitHub Copilot, Cursor, Gemini CLI) can invoke to parse BQL queries.
+Wazbean provides a BQL parser and query execution engine compiled to a WASI-compliant `.wasm` module. The parser is written in Go using `goyacc` for grammar-driven parsing and compiled to WASM via TinyGo. It can:
+
+1. **Parse** BQL query strings into JSON ASTs
+2. **Parse** Beancount `.beancount` ledger files into an in-memory transaction/posting model
+3. **Execute** BQL queries against ledger data, returning tabular JSON results
+
+When deployed as a Wassette component, these capabilities become MCP tools that AI agents (Claude, GitHub Copilot, Cursor, Gemini CLI) can invoke.
 
 ## Project Structure
 
@@ -14,20 +20,30 @@ go_bql_parser/
 ├── bql.y               # goyacc grammar — canonical BQL syntax definition
 ├── y.go                # Generated parser (do NOT edit manually)
 ├── lexer.go            # Lexer using Go's text/scanner
-├── main.go             # Parse() and ParseBQLToJSON() entry points
-├── parser_test.go      # Unit tests
+├── ledger.go           # Beancount ledger file parser (Transaction, Posting)
+├── executor.go         # Query execution engine (filter, project, group, sort)
+├── main.go             # Parse(), ParseBQLToJSON(), and ExecuteBQL() entry points
+├── parser_test.go      # Parser unit tests
+├── executor_test.go    # Execution engine unit tests
+├── testdata/
+│   └── sample.beancount  # Sample ledger for testing
+├── wit/
+│   ├── world.wit       # WIT world definition for WASI Preview 2 component
+│   └── deps/           # WASI WIT dependencies (fetched by `wkg wit fetch`)
+├── internal/           # Generated Go bindings (from `wit-bindgen-go`, do NOT edit)
+├── bql-parser.wasm     # Bundled WIT package (from `wkg wit build`)
 └── bql_parser.wasm     # Compiled WASI artifact
 ```
 
-## Exported Function
+## Exported Functions
+
+### ParseBQLToJSON
 
 ```
 ParseBQLToJSON(query string) string
 ```
 
 Accepts a BQL query string, returns a JSON-serialized AST or an error object.
-
-### Example
 
 **Input:** `SELECT account, balance FROM 'Expenses:Cash' WHERE category = 'Groceries' ORDER BY balance DESC`
 
@@ -37,18 +53,104 @@ Accepts a BQL query string, returns a JSON-serialized AST or an error object.
   "select": [{"literal": "account"}, {"literal": "balance"}],
   "from": "Expenses:Cash",
   "where": {"literal": "Groceries"},
-  "group_by": null,
+  "where_field": "category",
   "order_by": [{"expression": {"literal": "balance"}, "ascending": false}]
 }
 ```
 
-## Supported BQL Clauses
+### ExecuteBQL
 
-- `SELECT` — comma-separated list of identifiers
-- `FROM` — single-quoted source string
-- `WHERE` — condition in the form `identifier = 'value'`
-- `GROUP BY` — comma-separated list of identifiers
-- `ORDER BY` — comma-separated list of identifiers with optional `ASC`/`DESC`
+```
+ExecuteBQL(query string, ledgerText string) string
+```
+
+Accepts a BQL query string and the full text content of a Beancount ledger file. Parses both, executes the query against the ledger data, and returns tabular JSON results.
+
+**Input query:** `SELECT account, SUM(amount) WHERE account = 'Expenses:Food:Groceries' GROUP BY account`
+
+**Output:**
+```json
+{
+  "columns": ["account", "sum(amount)"],
+  "rows": [["Expenses:Food:Groceries", 607.65]]
+}
+```
+
+## Query Execution Model
+
+The engine operates on **posting rows** — one row per posting in the ledger, with access to the parent transaction's fields.
+
+### Available Fields
+
+| Field | Source | Type | Description |
+|---|---|---|---|
+| `account` | Posting | string | Account name (e.g. `Expenses:Food:Groceries`) |
+| `amount` | Posting | number | Posting amount (e.g. `87.34`) |
+| `currency` | Posting | string | Currency code (e.g. `USD`) |
+| `position` | Posting | string | Formatted amount + currency (e.g. `87.34 USD`) |
+| `date` | Transaction | string | Transaction date (`YYYY-MM-DD`) |
+| `payee` | Transaction | string | Payee (e.g. `Whole Foods`) |
+| `narration` | Transaction | string | Description (e.g. `Weekly groceries`) |
+| `flag` | Transaction | string | Transaction flag (`*` or `!`) |
+
+### Filtering
+
+- **`FROM 'prefix'`** — Transaction-level filter. Selects all postings from transactions that have at least one posting whose account starts with the given prefix. This preserves both sides of matching transactions.
+- **`WHERE field = 'value'`** — Posting-level filter. Keeps only postings where the specified field exactly matches the value.
+
+### Aggregate Functions
+
+When `GROUP BY` is used (or aggregate functions appear in `SELECT`):
+
+- **`SUM(amount)`** — Sum of the `amount` field across grouped postings
+- **`COUNT(*)`** — Number of postings in each group
+
+### Sorting
+
+- **`ORDER BY field [ASC|DESC]`** — Sort results by column value. Works on both plain and grouped queries. Numeric values are compared numerically; strings are compared lexicographically.
+
+## Supported BQL Syntax
+
+```
+SELECT expr [, expr ...]
+[FROM 'account-prefix']
+[WHERE field = 'value']
+[GROUP BY expr [, expr ...]]
+[ORDER BY expr [ASC|DESC] [, expr [ASC|DESC] ...]]
+```
+
+Expressions can be:
+- Identifiers: `account`, `date`, `amount`, `payee`, `narration`, `currency`, `position`, `flag`
+- Function calls: `SUM(amount)`, `COUNT(*)`
+
+## Beancount Ledger Format
+
+The ledger parser recognizes transaction directives and their postings. All other Beancount directives (`open`, `close`, `balance`, `pad`, `option`, etc.) are silently skipped.
+
+**Transaction format:**
+```
+YYYY-MM-DD * "Payee" "Narration"
+  Account:Name    amount CURRENCY
+  Account:Name   -amount CURRENCY
+```
+
+The payee string is optional. Postings without an explicit amount are parsed with `has_amount: false`.
+
+## Example Queries
+
+```sql
+-- List all expense postings with dates
+SELECT date, account, position WHERE account = 'Expenses:Food:Groceries'
+
+-- Total spending by expense category
+SELECT account, SUM(amount) FROM 'Expenses' GROUP BY account ORDER BY sum(amount) DESC
+
+-- All salary deposits
+SELECT date, amount WHERE account = 'Income:Salary:AcmeCo'
+
+-- Count postings per account
+SELECT account, COUNT(*) GROUP BY account ORDER BY count(*) DESC
+```
 
 ## Build
 
@@ -57,6 +159,8 @@ Accepts a BQL query string, returns a JSON-serialized AST or an error object.
 - Go 1.25+
 - `goyacc` (bundled with `golang.org/x/tools`)
 - TinyGo (for WASM compilation)
+- `wkg` (WebAssembly package manager, `cargo install wkg`)
+- `wit-bindgen-go` (added as Go tool dependency in go.mod)
 
 ### Commands
 
@@ -71,6 +175,18 @@ go test .
 
 # Build WASM artifact (WASI Preview 1 — browser/standalone use)
 tinygo build -o bql_parser.wasm -target wasi .
+
+# Fetch WASI WIT dependencies (required once, or after wit changes)
+wkg wit fetch --wit-dir ./wit
+
+# Bundle WIT package
+wkg wit build --wit-dir ./wit -o bql-parser.wasm
+
+# Generate Go bindings from WIT (required once, or after wit changes)
+go tool wit-bindgen-go generate --world bql-parser --out internal ./bql-parser.wasm
+
+# Build WASM (WASI Preview 2 — required for Wassette deployment)
+tinygo build -o bql_parser.wasm -target wasip2 --wit-package ./wit --wit-world bql-parser .
 ```
 
 ## Deploying as a Wassette Component
@@ -84,71 +200,59 @@ Wassette uses the [WebAssembly Component Model](https://component-model.bytecode
 Create `go_bql_parser/wit/world.wit`:
 
 ```wit
-package local:bql-parser;
-
-interface bql {
-    /// Parse a BQL query string into a JSON AST.
-    /// Returns a JSON string containing the parsed AST on success,
-    /// or a JSON object with an "error" field on failure.
-    parse-bql-to-json: func(query: string) -> result<string, string>;
-}
+package wazbean:bql-parser;
 
 world bql-parser {
     include wasi:cli/imports@0.2.0;
 
-    export bql;
+    export parse-bql-to-json: func(query: string) -> string;
+    export execute-bql: func(query: string, ledger-text: string) -> string;
 }
 ```
 
-### Step 2: Generate Go Bindings
+### Step 2: Fetch WASI WIT Dependencies
 
-Use the `wit-bindgen-go` tool to generate Go bindings from the WIT definition:
+Use `wkg` to fetch the WASI WIT dependencies referenced by the world:
 
 ```bash
 cd go_bql_parser
-go run go.bytecodealliance.org/cmd/wit-bindgen-go@v0.6.2 generate -o gen ./wit
+wkg wit fetch --wit-dir ./wit
 ```
 
-This creates a `gen/` directory with typed Go bindings that map the WIT interface to Go function signatures.
+This populates `wit/deps/` with the required WASI interface definitions.
 
-### Step 3: Wire Up the Exported Function
+### Step 3: Bundle WIT Package and Generate Go Bindings
 
-Create or update an init function in your Go source to register `ParseBQLToJSON` with the generated bindings:
+Bundle the WIT package, then use `wit-bindgen-go` (added as a Go tool dependency in `go.mod`) to generate typed Go bindings:
+
+```bash
+# Bundle WIT package
+wkg wit build --wit-dir ./wit -o bql-parser.wasm
+
+# Generate Go bindings into internal/ directory
+go tool wit-bindgen-go generate --world bql-parser --out internal ./bql-parser.wasm
+```
+
+This creates an `internal/` directory with typed Go bindings that map the WIT exports to Go function signatures.
+
+### Step 4: Wire Up the Exported Functions
+
+Create or update an init function in your Go source to register both exports with the generated bindings:
 
 ```go
 package main
 
 import (
-    "go_bql_parser/gen/local/bql-parser/bql"
-    "go.bytecodealliance.org/cm"
+	bqlparser "bql-parser/internal/wazbean/bql-parser/bql-parser"
 )
 
 func init() {
-    bql.Exports.ParseBqlToJson = parseBqlToJson
-}
-
-type ParseResult = cm.Result[string, string, string]
-
-func parseBqlToJson(query string) ParseResult {
-    ast, err := Parse(query)
-    if err != nil {
-        return cm.Err[ParseResult](err.Error())
-    }
-    jsonResult, err := json.Marshal(ast)
-    if err != nil {
-        return cm.Err[ParseResult]("Failed to serialize AST: " + err.Error())
-    }
-    return cm.OK[ParseResult](string(jsonResult))
+	bqlparser.Exports.ParseBqlToJSON = ParseBQLToJSON
+	bqlparser.Exports.ExecuteBql = ExecuteBQL
 }
 ```
 
-### Step 4: Add Dependencies
-
-Update `go.mod` to include the Component Model runtime library:
-
-```bash
-go get go.bytecodealliance.org/cm@v0.2.2
-```
+The exported functions return plain strings — the existing `ParseBQLToJSON` and `ExecuteBQL` functions are wired directly.
 
 ### Step 5: Build for WASI Preview 2
 
@@ -156,19 +260,10 @@ Wassette requires components built for WASI Preview 2 (`wasip2`):
 
 ```bash
 tinygo build -o bql_parser.wasm -target wasip2 \
-    --wit-package ./wit --wit-world bql-parser main.go
+    --wit-package ./wit --wit-world bql-parser .
 ```
 
-### Step 6: (Optional) Inject WIT Documentation
-
-Embed the WIT interface documentation into the component binary so AI agents can discover what the tool does:
-
-```bash
-# From repository root (requires wassette CLI)
-wassette inject-docs go_bql_parser/bql_parser.wasm go_bql_parser/wit
-```
-
-### Step 7: Install Wassette
+### Step 6: Install Wassette
 
 ```bash
 # Linux/macOS
@@ -182,13 +277,13 @@ brew install wassette
 wassette --version
 ```
 
-### Step 8: Run Locally with Wassette
+### Step 7: Run Locally with Wassette
 
 ```bash
 wassette run ./go_bql_parser/bql_parser.wasm --allow-stdio
 ```
 
-### Step 9: Configure as an MCP Server
+### Step 8: Configure as an MCP Server
 
 Register Wassette with your AI agent so it can discover and invoke the BQL parser tool.
 
@@ -232,7 +327,7 @@ Once configured, tell your agent to load the component:
 Please load the BQL parser component from ./go_bql_parser/bql_parser.wasm
 ```
 
-### Step 10: (Optional) Publish to an OCI Registry
+### Step 9: (Optional) Publish to an OCI Registry
 
 Publishing to an OCI registry allows remote loading without distributing the `.wasm` file directly:
 

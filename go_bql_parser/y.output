@@ -26,34 +26,37 @@ state 2
 state 3
 	query_statement:  SELECT select_list.from_clause_opt where_clause_opt group_by_clause_opt order_by_clause_opt 
 	select_list:  select_list.',' select_expr 
-	from_clause_opt: .    (5)
+	from_clause_opt: .    (7)
 
 	FROM  shift 8
 	','  shift 7
-	.  reduce 5 (src line 67)
+	.  reduce 7 (src line 80)
 
 	from_clause_opt  goto 6
 
 state 4
 	select_list:  select_expr.    (2)
 
-	.  reduce 2 (src line 49)
+	.  reduce 2 (src line 54)
 
 
 state 5
 	select_expr:  IDENT.    (4)
+	select_expr:  IDENT.'(' select_list ')' 
+	select_expr:  IDENT.'(' '*' ')' 
 
-	.  reduce 4 (src line 60)
+	'('  shift 9
+	.  reduce 4 (src line 65)
 
 
 state 6
 	query_statement:  SELECT select_list from_clause_opt.where_clause_opt group_by_clause_opt order_by_clause_opt 
-	where_clause_opt: .    (7)
+	where_clause_opt: .    (9)
 
-	WHERE  shift 10
-	.  reduce 7 (src line 72)
+	WHERE  shift 11
+	.  reduce 9 (src line 85)
 
-	where_clause_opt  goto 9
+	where_clause_opt  goto 10
 
 state 7
 	select_list:  select_list ','.select_expr 
@@ -61,192 +64,231 @@ state 7
 	IDENT  shift 5
 	.  error
 
-	select_expr  goto 11
+	select_expr  goto 12
 
 state 8
 	from_clause_opt:  FROM.STRING 
 
-	STRING  shift 12
+	STRING  shift 13
 	.  error
 
 
 state 9
-	query_statement:  SELECT select_list from_clause_opt where_clause_opt.group_by_clause_opt order_by_clause_opt 
-	group_by_clause_opt: .    (10)
+	select_expr:  IDENT '('.select_list ')' 
+	select_expr:  IDENT '('.'*' ')' 
 
-	GROUP  shift 14
-	.  reduce 10 (src line 85)
-
-	group_by_clause_opt  goto 13
-
-state 10
-	where_clause_opt:  WHERE.where_expression 
-
-	IDENT  shift 16
+	IDENT  shift 5
+	'*'  shift 15
 	.  error
 
-	where_expression  goto 15
+	select_list  goto 14
+	select_expr  goto 4
+
+state 10
+	query_statement:  SELECT select_list from_clause_opt where_clause_opt.group_by_clause_opt order_by_clause_opt 
+	group_by_clause_opt: .    (12)
+
+	GROUP  shift 17
+	.  reduce 12 (src line 99)
+
+	group_by_clause_opt  goto 16
 
 state 11
-	select_list:  select_list ',' select_expr.    (3)
+	where_clause_opt:  WHERE.where_expression 
 
-	.  reduce 3 (src line 54)
+	IDENT  shift 19
+	.  error
 
+	where_expression  goto 18
 
 state 12
-	from_clause_opt:  FROM STRING.    (6)
+	select_list:  select_list ',' select_expr.    (3)
 
-	.  reduce 6 (src line 69)
+	.  reduce 3 (src line 59)
 
 
 state 13
-	query_statement:  SELECT select_list from_clause_opt where_clause_opt group_by_clause_opt.order_by_clause_opt 
-	order_by_clause_opt: .    (12)
+	from_clause_opt:  FROM STRING.    (8)
 
-	ORDER  shift 18
-	.  reduce 12 (src line 90)
+	.  reduce 8 (src line 82)
 
-	order_by_clause_opt  goto 17
 
 state 14
-	group_by_clause_opt:  GROUP.BY select_list 
+	select_list:  select_list.',' select_expr 
+	select_expr:  IDENT '(' select_list.')' 
 
-	BY  shift 19
+	','  shift 7
+	')'  shift 20
 	.  error
 
 
 state 15
-	where_clause_opt:  WHERE where_expression.    (8)
+	select_expr:  IDENT '(' '*'.')' 
 
-	.  reduce 8 (src line 74)
+	')'  shift 21
+	.  error
 
 
 state 16
-	where_expression:  IDENT.EQ STRING 
+	query_statement:  SELECT select_list from_clause_opt where_clause_opt group_by_clause_opt.order_by_clause_opt 
+	order_by_clause_opt: .    (14)
 
-	EQ  shift 20
-	.  error
+	ORDER  shift 23
+	.  reduce 14 (src line 104)
 
+	order_by_clause_opt  goto 22
 
 state 17
-	query_statement:  SELECT select_list from_clause_opt where_clause_opt group_by_clause_opt order_by_clause_opt.    (1)
+	group_by_clause_opt:  GROUP.BY select_list 
 
-	.  reduce 1 (src line 35)
+	BY  shift 24
+	.  error
 
 
 state 18
-	order_by_clause_opt:  ORDER.BY order_by_list 
+	where_clause_opt:  WHERE where_expression.    (10)
 
-	BY  shift 21
-	.  error
+	.  reduce 10 (src line 87)
 
 
 state 19
+	where_expression:  IDENT.EQ STRING 
+
+	EQ  shift 25
+	.  error
+
+
+state 20
+	select_expr:  IDENT '(' select_list ')'.    (5)
+
+	.  reduce 5 (src line 70)
+
+
+state 21
+	select_expr:  IDENT '(' '*' ')'.    (6)
+
+	.  reduce 6 (src line 74)
+
+
+state 22
+	query_statement:  SELECT select_list from_clause_opt where_clause_opt group_by_clause_opt order_by_clause_opt.    (1)
+
+	.  reduce 1 (src line 39)
+
+
+state 23
+	order_by_clause_opt:  ORDER.BY order_by_list 
+
+	BY  shift 26
+	.  error
+
+
+state 24
 	group_by_clause_opt:  GROUP BY.select_list 
 
 	IDENT  shift 5
 	.  error
 
-	select_list  goto 22
+	select_list  goto 27
 	select_expr  goto 4
 
-state 20
+state 25
 	where_expression:  IDENT EQ.STRING 
 
-	STRING  shift 23
+	STRING  shift 28
 	.  error
 
 
-state 21
+state 26
 	order_by_clause_opt:  ORDER BY.order_by_list 
 
 	IDENT  shift 5
 	.  error
 
-	select_expr  goto 26
-	order_by_list  goto 24
-	order_by_expr  goto 25
-
-state 22
-	select_list:  select_list.',' select_expr 
-	group_by_clause_opt:  GROUP BY select_list.    (11)
-
-	','  shift 7
-	.  reduce 11 (src line 87)
-
-
-state 23
-	where_expression:  IDENT EQ STRING.    (9)
-
-	.  reduce 9 (src line 77)
-
-
-state 24
-	order_by_clause_opt:  ORDER BY order_by_list.    (13)
-	order_by_list:  order_by_list.',' order_by_expr 
-
-	','  shift 27
-	.  reduce 13 (src line 92)
-
-
-state 25
-	order_by_list:  order_by_expr.    (14)
-
-	.  reduce 14 (src line 95)
-
-
-state 26
-	order_by_expr:  select_expr.opt_asc_desc 
-	opt_asc_desc: .    (17)
-
-	ASC  shift 29
-	DESC  shift 30
-	.  reduce 17 (src line 113)
-
-	opt_asc_desc  goto 28
+	select_expr  goto 31
+	order_by_list  goto 29
+	order_by_expr  goto 30
 
 state 27
+	select_list:  select_list.',' select_expr 
+	group_by_clause_opt:  GROUP BY select_list.    (13)
+
+	','  shift 7
+	.  reduce 13 (src line 101)
+
+
+state 28
+	where_expression:  IDENT EQ STRING.    (11)
+
+	.  reduce 11 (src line 90)
+
+
+state 29
+	order_by_clause_opt:  ORDER BY order_by_list.    (15)
+	order_by_list:  order_by_list.',' order_by_expr 
+
+	','  shift 32
+	.  reduce 15 (src line 106)
+
+
+state 30
+	order_by_list:  order_by_expr.    (16)
+
+	.  reduce 16 (src line 109)
+
+
+state 31
+	order_by_expr:  select_expr.opt_asc_desc 
+	opt_asc_desc: .    (19)
+
+	ASC  shift 34
+	DESC  shift 35
+	.  reduce 19 (src line 127)
+
+	opt_asc_desc  goto 33
+
+state 32
 	order_by_list:  order_by_list ','.order_by_expr 
 
 	IDENT  shift 5
 	.  error
 
-	select_expr  goto 26
-	order_by_expr  goto 31
+	select_expr  goto 31
+	order_by_expr  goto 36
 
-state 28
-	order_by_expr:  select_expr opt_asc_desc.    (16)
+state 33
+	order_by_expr:  select_expr opt_asc_desc.    (18)
 
-	.  reduce 16 (src line 106)
-
-
-state 29
-	opt_asc_desc:  ASC.    (18)
-
-	.  reduce 18 (src line 115)
+	.  reduce 18 (src line 120)
 
 
-state 30
-	opt_asc_desc:  DESC.    (19)
+state 34
+	opt_asc_desc:  ASC.    (20)
 
-	.  reduce 19 (src line 116)
-
-
-state 31
-	order_by_list:  order_by_list ',' order_by_expr.    (15)
-
-	.  reduce 15 (src line 100)
+	.  reduce 20 (src line 129)
 
 
-15 terminals, 12 nonterminals
-20 grammar rules, 32/16000 states
+state 35
+	opt_asc_desc:  DESC.    (21)
+
+	.  reduce 21 (src line 130)
+
+
+state 36
+	order_by_list:  order_by_list ',' order_by_expr.    (17)
+
+	.  reduce 17 (src line 114)
+
+
+18 terminals, 12 nonterminals
+22 grammar rules, 37/16000 states
 0 shift/reduce, 0 reduce/reduce conflicts reported
 61 working sets used
-memory: parser 19/240000
-1 extra closures
-21 shift entries, 1 exceptions
-16 goto entries
-1 entries saved by goto default
-Optimizer space used: output 33/240000
-33 table entries, 0 zero
-maximum spread: 15, maximum offset: 27
+memory: parser 21/240000
+9 extra closures
+27 shift entries, 1 exceptions
+17 goto entries
+2 entries saved by goto default
+Optimizer space used: output 40/240000
+40 table entries, 0 zero
+maximum spread: 18, maximum offset: 32

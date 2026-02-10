@@ -10,6 +10,10 @@ package main
     orderBy  OrderBy
     orderBys []OrderBy
     query    *Query
+    whereClause struct {
+        field string
+        expr  Expression
+    }
 }
 
 // Token declarations
@@ -18,17 +22,17 @@ package main
 %token EQ
 
 // Type declarations for grammar rules
-%type <query>    query_statement
-%type <exprs>    select_list
-%type <expr>     select_expr
-%type <str>      from_clause_opt
-%type <expr>     where_clause_opt
-%type <exprs>    group_by_clause_opt
-%type <orderBys> order_by_clause_opt
-%type <orderBys> order_by_list
-%type <orderBy>  order_by_expr
-%type <str>      opt_asc_desc
-%type <expr>     where_expression
+%type <query>       query_statement
+%type <exprs>       select_list
+%type <expr>        select_expr
+%type <str>         from_clause_opt
+%type <whereClause> where_clause_opt
+%type <exprs>       group_by_clause_opt
+%type <orderBys>    order_by_clause_opt
+%type <orderBys>    order_by_list
+%type <orderBy>     order_by_expr
+%type <str>         opt_asc_desc
+%type <whereClause> where_expression
 
 %%
 
@@ -36,11 +40,12 @@ query_statement:
     SELECT select_list from_clause_opt where_clause_opt group_by_clause_opt order_by_clause_opt
     {
         $$ = &Query{
-            Select:  $2,
-            From:    $3,
-            Where:   $4,
-            GroupBy: $5,
-            OrderBy: $6,
+            Select:     $2,
+            From:       $3,
+            Where:      $4.expr,
+            WhereField: $4.field,
+            GroupBy:    $5,
+            OrderBy:    $6,
         }
         yylex.(*BQLLexer).result = $$
     }
@@ -62,6 +67,14 @@ select_expr:
     {
         $$ = Expression{Literal: $1}
     }
+|   IDENT '(' select_list ')'
+    {
+        $$ = Expression{FuncName: $1, FuncArgs: $3}
+    }
+|   IDENT '(' '*' ')'
+    {
+        $$ = Expression{FuncName: $1, FuncArgs: []Expression{{Literal: "*"}}}
+    }
 ;
 
 from_clause_opt:
@@ -70,14 +83,15 @@ from_clause_opt:
 ;
 
 where_clause_opt:
-    /* empty */            { $$ = Expression{} }
+    /* empty */            { $$.field = ""; $$.expr = Expression{} }
 |   WHERE where_expression { $$ = $2 }
 ;
 
 where_expression:
     IDENT EQ STRING
     {
-        $$ = Expression{Literal: $3}
+        $$.field = $1
+        $$.expr = Expression{Literal: $3}
     }
 ;
 

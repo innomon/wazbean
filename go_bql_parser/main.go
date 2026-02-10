@@ -3,13 +3,17 @@ package main
 import (
 	"encoding/json"
 	"fmt"
+
+	bqlparser "bql-parser/internal/wazbean/bql-parser/bql-parser"
 )
 
-// main is required by the Go compiler, but it does nothing in a WASI library.
+func init() {
+	bqlparser.Exports.ParseBqlToJSON = ParseBQLToJSON
+	bqlparser.Exports.ExecuteBql = ExecuteBQL
+}
+
 func main() {}
 
-// Parse takes a BQL query string and returns the parsed AST.
-// This function is the core logic of our parser.
 func Parse(query string) (*Query, error) {
 	lexer := NewBQLLexer(query)
 	if yyParse(lexer) != 0 || lexer.err != nil {
@@ -21,10 +25,6 @@ func Parse(query string) (*Query, error) {
 	return lexer.result, nil
 }
 
-// ParseBQLToJSON is the function that will be exported from the WASM module.
-// It takes a BQL query string and returns a JSON string.
-// The //export comment is a TinyGo directive.
-//export ParseBQLToJSON
 func ParseBQLToJSON(query string) string {
 	ast, err := Parse(query)
 	if err != nil {
@@ -34,6 +34,30 @@ func ParseBQLToJSON(query string) string {
 	jsonResult, err := json.Marshal(ast)
 	if err != nil {
 		return fmt.Sprintf(`{"error": "Failed to serialize AST to JSON: %v"}`, err)
+	}
+
+	return string(jsonResult)
+}
+
+func ExecuteBQL(query string, ledgerText string) string {
+	ast, err := Parse(query)
+	if err != nil {
+		return fmt.Sprintf(`{"error": "parse error: %v"}`, err)
+	}
+
+	ledger, err := ParseLedger(ledgerText)
+	if err != nil {
+		return fmt.Sprintf(`{"error": "ledger error: %v"}`, err)
+	}
+
+	result, err := Execute(ast, ledger)
+	if err != nil {
+		return fmt.Sprintf(`{"error": "execution error: %v"}`, err)
+	}
+
+	jsonResult, err := json.Marshal(result)
+	if err != nil {
+		return fmt.Sprintf(`{"error": "serialization error: %v"}`, err)
 	}
 
 	return string(jsonResult)
