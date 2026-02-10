@@ -1,0 +1,252 @@
+
+state 0
+	$accept: .query_statement $end 
+
+	SELECT  shift 2
+	.  error
+
+	query_statement  goto 1
+
+state 1
+	$accept:  query_statement.$end 
+
+	$end  accept
+	.  error
+
+
+state 2
+	query_statement:  SELECT.select_list from_clause_opt where_clause_opt group_by_clause_opt order_by_clause_opt 
+
+	IDENT  shift 5
+	.  error
+
+	select_list  goto 3
+	select_expr  goto 4
+
+state 3
+	query_statement:  SELECT select_list.from_clause_opt where_clause_opt group_by_clause_opt order_by_clause_opt 
+	select_list:  select_list.',' select_expr 
+	from_clause_opt: .    (5)
+
+	FROM  shift 8
+	','  shift 7
+	.  reduce 5 (src line 67)
+
+	from_clause_opt  goto 6
+
+state 4
+	select_list:  select_expr.    (2)
+
+	.  reduce 2 (src line 49)
+
+
+state 5
+	select_expr:  IDENT.    (4)
+
+	.  reduce 4 (src line 60)
+
+
+state 6
+	query_statement:  SELECT select_list from_clause_opt.where_clause_opt group_by_clause_opt order_by_clause_opt 
+	where_clause_opt: .    (7)
+
+	WHERE  shift 10
+	.  reduce 7 (src line 72)
+
+	where_clause_opt  goto 9
+
+state 7
+	select_list:  select_list ','.select_expr 
+
+	IDENT  shift 5
+	.  error
+
+	select_expr  goto 11
+
+state 8
+	from_clause_opt:  FROM.STRING 
+
+	STRING  shift 12
+	.  error
+
+
+state 9
+	query_statement:  SELECT select_list from_clause_opt where_clause_opt.group_by_clause_opt order_by_clause_opt 
+	group_by_clause_opt: .    (10)
+
+	GROUP  shift 14
+	.  reduce 10 (src line 85)
+
+	group_by_clause_opt  goto 13
+
+state 10
+	where_clause_opt:  WHERE.where_expression 
+
+	IDENT  shift 16
+	.  error
+
+	where_expression  goto 15
+
+state 11
+	select_list:  select_list ',' select_expr.    (3)
+
+	.  reduce 3 (src line 54)
+
+
+state 12
+	from_clause_opt:  FROM STRING.    (6)
+
+	.  reduce 6 (src line 69)
+
+
+state 13
+	query_statement:  SELECT select_list from_clause_opt where_clause_opt group_by_clause_opt.order_by_clause_opt 
+	order_by_clause_opt: .    (12)
+
+	ORDER  shift 18
+	.  reduce 12 (src line 90)
+
+	order_by_clause_opt  goto 17
+
+state 14
+	group_by_clause_opt:  GROUP.BY select_list 
+
+	BY  shift 19
+	.  error
+
+
+state 15
+	where_clause_opt:  WHERE where_expression.    (8)
+
+	.  reduce 8 (src line 74)
+
+
+state 16
+	where_expression:  IDENT.EQ STRING 
+
+	EQ  shift 20
+	.  error
+
+
+state 17
+	query_statement:  SELECT select_list from_clause_opt where_clause_opt group_by_clause_opt order_by_clause_opt.    (1)
+
+	.  reduce 1 (src line 35)
+
+
+state 18
+	order_by_clause_opt:  ORDER.BY order_by_list 
+
+	BY  shift 21
+	.  error
+
+
+state 19
+	group_by_clause_opt:  GROUP BY.select_list 
+
+	IDENT  shift 5
+	.  error
+
+	select_list  goto 22
+	select_expr  goto 4
+
+state 20
+	where_expression:  IDENT EQ.STRING 
+
+	STRING  shift 23
+	.  error
+
+
+state 21
+	order_by_clause_opt:  ORDER BY.order_by_list 
+
+	IDENT  shift 5
+	.  error
+
+	select_expr  goto 26
+	order_by_list  goto 24
+	order_by_expr  goto 25
+
+state 22
+	select_list:  select_list.',' select_expr 
+	group_by_clause_opt:  GROUP BY select_list.    (11)
+
+	','  shift 7
+	.  reduce 11 (src line 87)
+
+
+state 23
+	where_expression:  IDENT EQ STRING.    (9)
+
+	.  reduce 9 (src line 77)
+
+
+state 24
+	order_by_clause_opt:  ORDER BY order_by_list.    (13)
+	order_by_list:  order_by_list.',' order_by_expr 
+
+	','  shift 27
+	.  reduce 13 (src line 92)
+
+
+state 25
+	order_by_list:  order_by_expr.    (14)
+
+	.  reduce 14 (src line 95)
+
+
+state 26
+	order_by_expr:  select_expr.opt_asc_desc 
+	opt_asc_desc: .    (17)
+
+	ASC  shift 29
+	DESC  shift 30
+	.  reduce 17 (src line 113)
+
+	opt_asc_desc  goto 28
+
+state 27
+	order_by_list:  order_by_list ','.order_by_expr 
+
+	IDENT  shift 5
+	.  error
+
+	select_expr  goto 26
+	order_by_expr  goto 31
+
+state 28
+	order_by_expr:  select_expr opt_asc_desc.    (16)
+
+	.  reduce 16 (src line 106)
+
+
+state 29
+	opt_asc_desc:  ASC.    (18)
+
+	.  reduce 18 (src line 115)
+
+
+state 30
+	opt_asc_desc:  DESC.    (19)
+
+	.  reduce 19 (src line 116)
+
+
+state 31
+	order_by_list:  order_by_list ',' order_by_expr.    (15)
+
+	.  reduce 15 (src line 100)
+
+
+15 terminals, 12 nonterminals
+20 grammar rules, 32/16000 states
+0 shift/reduce, 0 reduce/reduce conflicts reported
+61 working sets used
+memory: parser 19/240000
+1 extra closures
+21 shift entries, 1 exceptions
+16 goto entries
+1 entries saved by goto default
+Optimizer space used: output 33/240000
+33 table entries, 0 zero
+maximum spread: 15, maximum offset: 27
