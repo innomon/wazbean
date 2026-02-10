@@ -10,6 +10,7 @@ import (
 func init() {
 	bqlparser.Exports.ParseBqlToJSON = ParseBQLToJSON
 	bqlparser.Exports.ExecuteBql = ExecuteBQL
+	bqlparser.Exports.CheckBeancountSyntax = CheckBeancountSyntax
 }
 
 func main() {}

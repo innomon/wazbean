@@ -9,6 +9,7 @@ Wazbean provides a BQL parser and query execution engine compiled to a WASI-comp
 1. **Parse** BQL query strings into JSON ASTs
 2. **Parse** Beancount `.beancount` ledger files into an in-memory transaction/posting model
 3. **Execute** BQL queries against ledger data, returning tabular JSON results
+4. **Check syntax** of `.beancount` ledger files, returning structured errors with line numbers
 
 When deployed as a Wassette component, these capabilities become MCP tools that AI agents (Claude, GitHub Copilot, Cursor, Gemini CLI) can invoke.
 
@@ -22,9 +23,11 @@ go_bql_parser/
 ├── lexer.go            # Lexer using Go's text/scanner
 ├── ledger.go           # Beancount ledger file parser (Transaction, Posting)
 ├── executor.go         # Query execution engine (filter, project, group, sort)
-├── main.go             # Parse(), ParseBQLToJSON(), and ExecuteBQL() entry points
+├── syntax.go           # Beancount ledger syntax checker
+├── main.go             # Parse(), ParseBQLToJSON(), ExecuteBQL(), and CheckBeancountSyntax() entry points
 ├── parser_test.go      # Parser unit tests
 ├── executor_test.go    # Execution engine unit tests
+├── syntax_test.go      # Syntax checker unit tests
 ├── testdata/
 │   └── sample.beancount  # Sample ledger for testing
 ├── wit/
@@ -75,6 +78,42 @@ Accepts a BQL query string and the full text content of a Beancount ledger file.
   "rows": [["Expenses:Food:Groceries", 607.65]]
 }
 ```
+
+### CheckBeancountSyntax
+
+```
+CheckBeancountSyntax(ledgerText string) string
+```
+
+Accepts the full text content of a Beancount ledger file and validates its syntax. Returns a JSON object indicating whether the file is valid, with an array of errors including line numbers and messages.
+
+**Valid input output:**
+```json
+{
+  "valid": true,
+  "errors": []
+}
+```
+
+**Invalid input output:**
+```json
+{
+  "valid": false,
+  "errors": [
+    {"line": 1, "message": "transaction has no postings"},
+    {"line": 5, "message": "unknown directive: foobar"}
+  ]
+}
+```
+
+**Checks performed:**
+- Transaction structure: requires `*` or `!` flag and quoted narration
+- Transactions must have at least one posting
+- Posting syntax validation (account name, optional amount and currency)
+- Indented lines must appear inside a transaction
+- Known directives: `open`, `close`, `balance`, `pad`, `event`, `note`, `document`, `custom`, `commodity`, `price`, `query`, `plugin`
+- Directives that require an account (`open`, `close`, `balance`, `pad`) must have one
+- Top-level `option`, `include`, `plugin`, `pushtag`, `poptag` lines are accepted
 
 ## Query Execution Model
 
@@ -207,6 +246,7 @@ world bql-parser {
 
     export parse-bql-to-json: func(query: string) -> string;
     export execute-bql: func(query: string, ledger-text: string) -> string;
+    export check-beancount-syntax: func(ledger-text: string) -> string;
 }
 ```
 
@@ -249,10 +289,11 @@ import (
 func init() {
 	bqlparser.Exports.ParseBqlToJSON = ParseBQLToJSON
 	bqlparser.Exports.ExecuteBql = ExecuteBQL
+	bqlparser.Exports.CheckBeancountSyntax = CheckBeancountSyntax
 }
 ```
 
-The exported functions return plain strings — the existing `ParseBQLToJSON` and `ExecuteBQL` functions are wired directly.
+The exported functions return plain strings — the existing `ParseBQLToJSON`, `ExecuteBQL`, and `CheckBeancountSyntax` functions are wired directly.
 
 ### Step 5: Build for WASI Preview 2
 

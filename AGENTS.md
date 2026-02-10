@@ -5,7 +5,7 @@
 This project provides a WASI-compliant WebAssembly component that parses Beancount Query Language (BQL) strings and executes them against Beancount ledger data. The parser is written in Go using `goyacc` and compiled to WASM via TinyGo. The component is designed to be deployed as a [Wassette](https://github.com/microsoft/wassette) component, exposing the parser and query engine as MCP tools for AI agents.
 
 **Deliverables:**
-- `go_bql_parser/bql_parser.wasm` — exports `ParseBQLToJSON(query string) string` and `ExecuteBQL(query string, ledgerText string) string`.
+- `go_bql_parser/bql_parser.wasm` — exports `ParseBQLToJSON(query string) string`, `ExecuteBQL(query string, ledgerText string) string`, and `CheckBeancountSyntax(ledgerText string) string`.
 
 **Status:** All tests pass. WASM artifact compiled and ready.
 
@@ -21,9 +21,11 @@ All parser source lives in `go_bql_parser/`:
 | `lexer.go` | Lexer using `text/scanner`; handles keywords, identifiers, single-quoted strings |
 | `ledger.go` | Beancount ledger file parser (`ParseLedger`); extracts `Transaction` and `Posting` structs |
 | `executor.go` | Query execution engine (`Execute`); handles filtering, projection, GROUP BY, aggregates, ORDER BY |
-| `main.go` | `Parse()`, `ParseBQLToJSON()`, and `ExecuteBQL()` entry points |
+| `syntax.go` | Beancount ledger syntax checker (`CheckSyntax`, `CheckBeancountSyntax`); validates structure and reports errors with line numbers |
+| `main.go` | `Parse()`, `ParseBQLToJSON()`, `ExecuteBQL()`, and `CheckBeancountSyntax()` entry points |
 | `parser_test.go` | Unit tests for BQL parsing (valid and invalid queries) |
 | `executor_test.go` | Unit tests for ledger parsing, query execution, aggregation, and end-to-end `ExecuteBQL` |
+| `syntax_test.go` | Unit tests for syntax checking (valid/invalid ledgers, error reporting) |
 | `testdata/sample.beancount` | Sample Beancount ledger for testing |
 | `wit/world.wit` | WIT world definition for WASI Preview 2 component model |
 | `wit/deps/` | WASI WIT dependencies (fetched by `wkg wit fetch`, do NOT edit) |
@@ -99,7 +101,7 @@ tinygo build -o bql_parser.wasm -target wasip2 --wit-package ./wit --wit-world b
 
 ### Component Model Wiring
 - Exports are registered in `init()` via generated bindings in `internal/wazbean/bql-parser/bql-parser/`.
-- The `bqlparser.Exports.ParseBqlToJSON` and `bqlparser.Exports.ExecuteBql` fields are set to the implementation functions.
+- The `bqlparser.Exports.ParseBqlToJSON`, `bqlparser.Exports.ExecuteBql`, and `bqlparser.Exports.CheckBeancountSyntax` fields are set to the implementation functions.
 - The `//export` annotations are NOT used for wasip2 builds.
 
 ## 6. Supported BQL Syntax

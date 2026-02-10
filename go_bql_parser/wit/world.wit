@@ -5,4 +5,5 @@ world bql-parser {
 
     export parse-bql-to-json: func(query: string) -> string;
     export execute-bql: func(query: string, ledger-text: string) -> string;
+    export check-beancount-syntax: func(ledger-text: string) -> string;
 }
