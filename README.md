@@ -392,4 +392,4 @@ Wassette runs all components in a deny-by-default sandbox. The BQL parser is a p
 
 ## Background
 
-The initial approach of wrapping the official Beancount C++ parser (via a C++ WASM wrapper) was abandoned due to a broken Bazel build environment on the `cpp` branch. That code has been removed. The current implementation is a ground-up rewrite in Go.
+The initial approach of wrapping the official Beancount C++ parser (via a C++ WASM wrapper) was abandoned due to a broken Bazel build environment on the `cpp` branch. That code — including the upstream Bison grammar (`parser.y.yxx`) and RE/flex scanner (`scanner.l.lxx`) reference files — has been removed. The current implementation is a ground-up rewrite in Go using `goyacc` and a hand-written lexer.
